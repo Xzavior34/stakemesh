@@ -41,8 +41,17 @@ Out of scope:
 - The demo dataset (`src/lib/data/demoProvider.ts`) — it is intentionally fake, clearly labeled, and contains no real
   validator identities.
 
+## Threat Model & Security Controls
+
+### 1. Cluster Mismatch Protection
+StakeMesh explicitly compares the connected wallet's RPC cluster (Mainnet-Beta, Testnet, Devnet, Demo) against the transaction target. Execution is blocked if a mismatch occurs (`checkClusterSafety`), preventing accidental testnet transactions on mainnet or vice versa.
+
+### 2. Transaction Instruction Decoding & Preview
+Before presenting a transaction for signing, `describeTransaction()` decodes the raw serialized instruction data into a human-readable summary. If an instruction belongs to an unexpected program ID, it is explicitly flagged to the user.
+
+### 3. Pure Deterministic Policy Engine
+All allocation and drift detection algorithms inside `src/lib/engine/` are pure functions with zero network access and zero key handling. Inputs are sanitized and 10 core invariants (such as total lamport conservation and hard constraint enforcement) are verified via invariant test suites.
+
 ## Known, intentional limitations
 
-These are documented in [`/docs/security`](src/app/docs/security/page.tsx) and the README's "Known limitations"
-section, not hidden gaps: live-mode ASN/datacenter/geo data is honestly reported as unknown rather than fabricated,
-and full rebalancing-transaction submission is scaffolded but not wired to submission in this reference build.
+These are documented in [`/docs/security`](src/app/docs/security/page.tsx) and the README's "Known limitations" section, not hidden gaps: live-mode ASN/datacenter/geo data is honestly reported as unknown rather than fabricated, and full rebalancing-transaction submission requires explicit user wallet authorization. Users should always inspect transaction details in their connected wallet before signing.

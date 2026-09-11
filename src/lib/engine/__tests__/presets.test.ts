@@ -4,10 +4,17 @@ import { STRATEGY_PRESETS, getPreset } from "../presets";
 import { makeCohort, makePolicy } from "./fixtures";
 
 describe("STRATEGY_PRESETS", () => {
-  it("has exactly the five documented presets", () => {
+  it("has documented presets including foundation-decentralization", () => {
     const ids = STRATEGY_PRESETS.map((p) => p.id).sort();
     expect(ids).toEqual(
-      ["balanced", "conservative", "decentralization-first", "performance-first", "yield-optimized"].sort()
+      [
+        "foundation-decentralization",
+        "balanced",
+        "conservative",
+        "decentralization-first",
+        "performance-first",
+        "yield-optimized",
+      ].sort()
     );
   });
 

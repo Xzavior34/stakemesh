@@ -171,11 +171,42 @@ export interface RebalanceProposal {
   summary: string;
 }
 
-export type DataSourceKind = "live" | "demo";
+export type DataSourceKind = "live" | "demo" | "indexed";
+
+export type DataProvenanceTag = "REAL-TIME" | "PERIODIC" | "STATIC" | "UNAVAILABLE";
+
+export interface MetricProvenance {
+  metric: string;
+  source: string;
+  tag: DataProvenanceTag;
+}
 
 export interface ValidatorDataSnapshot {
   source: DataSourceKind;
   epochLabel: string;
   fetchedAt: string; // ISO timestamp
   validators: Validator[];
+  provenance?: MetricProvenance[];
+}
+
+export type RebalanceStatus =
+  | "RECOMMENDED"
+  | "APPROVED"
+  | "SUBMITTED"
+  | "CONFIRMED"
+  | "FAILED"
+  | "CANCELLED";
+
+export interface RebalanceHistoryRecord {
+  id: string;
+  timestamp: string;
+  cluster: string;
+  status: RebalanceStatus;
+  policyId: string;
+  policyName: string;
+  beforeDistributionScore: number;
+  afterDistributionScore: number;
+  moves: RebalanceMove[];
+  txSignatures?: string[];
+  errorMessage?: string;
 }

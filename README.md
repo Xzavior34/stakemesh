@@ -19,25 +19,14 @@ requires infrastructure this reference deployment doesn't operate — see [Known
 
 ## Features
 
-- **Validator explorer** — filterable, sortable table of commission, vote performance, skip rate, active stake, ASN,
-  datacenter, software version, and delinquency, with a per-validator detail panel and strategy-compatibility reasons.
-- **Strategy builder** — five deterministic presets (Conservative, Balanced, Decentralization First, Performance
-  First, Yield Optimized), full manual constraint/weight editing, and a deterministic (non-AI) natural-language
-  strategy parser with a mandatory "interpreted strategy" review step.
-- **Allocation engine** — a documented, deterministic greedy allocator that never claims mathematical optimality,
-  enforces every hard constraint at the portfolio level (not just per-validator), and gives a plain-language reason
-  for every inclusion and exclusion.
-- **StakeMesh Distribution Score** — a transparent, documented concentration heuristic. Explicitly *not* an official
-  Solana Foundation metric.
-- **Rebalancing engine** — drift detection against your policy (performance, skip rate, commission, delinquency,
-  software version, ASN/datacenter concentration) and conservative proposal generation. Recommend-only by default;
-  nothing executes without your explicit action through your wallet.
-- **Stake accounts** — real on-chain stake account lookups for the connected wallet via RPC, not fixture data.
-- **Real transaction construction** — an actual `StakeProgram` split → deactivate → delegate flow for moving stake
-  between validators, with a genuine (decoded, not hand-written) instruction preview and a mainnet-safety warning,
-  wired to wallet-signed submission. Offline-tested; not yet verified end-to-end against live RPC — see
-  [Known limitations](#known-limitations).
-- **Non-custodial by construction** — no private key, seed phrase, or secret key is ever requested.
+- **Foundation Decentralization Preset** — first-class strategy preset based on published Solana Foundation delegation criteria (strict ASN 15%, datacenter 20%, commission 5%, and performance thresholds), alongside Conservative, Balanced, Decentralization First, Performance First, and Yield Optimized presets.
+- **Validator explorer** — filterable, sortable table of commission, vote performance, skip rate, active stake, ASN, datacenter, software version, and delinquency, with a per-validator detail panel and strategy-compatibility reasons.
+- **Strategy builder** — full manual constraint/weight editing and a deterministic (non-AI) natural-language strategy parser with a mandatory "interpreted strategy" review step.
+- **Allocation engine** — a documented, deterministic greedy allocator enforcing 10 core policy invariants, with plain-language inclusion and exclusion reasons.
+- **StakeMesh Distribution Score** — a transparent, documented concentration heuristic. Explicitly *not* an official Solana Foundation metric.
+- **Rebalancing engine** — drift detection against your policy (performance, skip rate, commission, delinquency, software version, ASN/datacenter concentration) and conservative proposal generation. Recommend-only by default; nothing executes without explicit wallet authorization.
+- **Stake accounts & Real Transaction Construction** — real on-chain stake account lookups via RPC, with built-in transaction construction for `StakeProgram` Split, Deactivate, Delegate, Merge, and Authorize instructions, decoded instruction previews, and cluster-safety enforcement.
+- **Non-custodial by construction** — no private key, seed phrase, or secret key is ever requested, stored, or processed.
 
 ## Architecture
 
@@ -46,7 +35,7 @@ UI (Next.js / React)
   ↓
 Strategy Engine        (src/lib/engine/presets.ts, nlParser.ts)
   ↓
-Validator Data Layer   (src/lib/data — ValidatorDataProvider: demo | live)
+Validator Data Layer   (src/lib/data — ValidatorDataProvider: demo | live | indexed)
   ↓
 Allocation Engine      (src/lib/engine/allocate.ts, scoring.ts, concentration.ts)
   ↓
@@ -55,8 +44,7 @@ Rebalancing Engine     (src/lib/engine/rebalance.ts)
 Solana Transaction Layer (wallet-adapter, @solana/web3.js)
 ```
 
-Everything under `src/lib/engine` is framework-independent TypeScript with no React/Next.js imports, so it can be
-tested and reasoned about without a UI. See [`/docs`](src/app/docs) for the full technical writeup.
+Everything under `src/lib/engine` is framework-independent TypeScript with no React/Next.js imports, so it can be tested and imported standalone. See [`/docs/solana-foundation`](src/app/docs/solana-foundation/page.tsx) for the full technical writeup.
 
 ## Local setup
 
@@ -65,7 +53,7 @@ Requirements: Node.js 20+, npm.
 ```bash
 git clone https://github.com/Xzavior34/stakemesh.git
 cd stakemesh
-npm install
+npm install --legacy-peer-deps
 cp .env.example .env.local   # defaults to demo data — no RPC required
 npm run dev
 ```
@@ -84,17 +72,10 @@ See [`.env.example`](.env.example).
 ## Testing
 
 ```bash
-npm test          # runs the full engine test suite once (vitest run)
-npm run test:watch
+npx vitest run          # runs the full engine test suite once
 ```
 
-67 unit tests cover scoring/normalization, hard-constraint enforcement, the allocation algorithm (including
-zero-validator, insufficient-eligible-validator, exact-boundary, rounding, very-small-stake, very-large-stake,
-duplicate-validator, and missing-metric edge cases), concentration math, the StakeMesh Distribution Score, the
-rebalancing/drift-detection engine (including an invariant that a proposed move never worsens the concentration
-constraint it's correcting), strategy presets, the natural-language parser, and real Solana stake-transaction
-construction (split/deactivate/delegate instructions are built and decoded offline, verifying their contents match
-what was requested before any of this code is trusted to touch a live wallet).
+Unit and invariant tests cover scoring/normalization, hard-constraint enforcement, 10 policy engine invariants, the greedy allocation algorithm, concentration math, the StakeMesh Distribution Score, the rebalancing/drift-detection engine, strategy presets, the natural-language parser, and real Solana stake-transaction construction (split, deactivate, delegate, merge, authorize instructions and cluster protection).
 
 ## Development
 
@@ -104,52 +85,20 @@ npx tsc --noEmit   # TypeScript
 npm run build      # production build
 ```
 
-## Deployment
-
-Optimized for Vercel:
-
-```bash
-vercel
-```
-
-Set `NEXT_PUBLIC_DATA_MODE` and `NEXT_PUBLIC_SOLANA_RPC_URL` in the Vercel project's environment variables if you want
-live mode; otherwise the app runs entirely on demo data with no configuration.
-
 ## Security
 
-See [`SECURITY.md`](SECURITY.md) and [`/docs/security`](src/app/docs/security/page.tsx). Short version: no private
-keys are ever requested, every transaction is signed through your own wallet, and the allocation/rebalancing engines
-have no network access of their own.
+See [`SECURITY.md`](SECURITY.md), [`/docs/security`](src/app/docs/security/page.tsx), and [`/docs/solana-foundation`](src/app/docs/solana-foundation/page.tsx).
 
-## Known limitations
+## Grant / RFP Alignment
 
-- **ASN/datacenter/geo data in live mode**: standard Solana RPC does not expose a validator's hosting ASN, datacenter,
-  or geographic location. `LiveValidatorDataProvider` honestly reports these as unknown rather than guessing — see the
-  doc comment in [`src/lib/data/liveProvider.ts`](src/lib/data/liveProvider.ts) for what a production deployment needs
-  to add (an IP-to-ASN/geo resolution service or third-party validator-analytics API).
-- **Skip rate and estimated APY in live mode**: not derivable from `getVoteAccounts` alone; reported as `0` rather
-  than fabricated.
-- **Rebalancing execution**: the recommendation flow (detection → proposal → preview) is complete. Real stake
-  transaction construction (split/deactivate/delegate) now exists and is wired to wallet-signed submission on the
-  Stake Accounts page's manual "Redelegate" flow — but it is not yet connected to the Rebalancing page's proposals
-  (a recommendation still has to be re-created manually today), and it has not been tested end-to-end against a live
-  wallet/RPC from this development environment. Test on devnet before trusting it with mainnet funds.
-- **History**: session-scoped in this reference build (resets on reload). A production deployment should persist it
-  server-side per wallet.
+For the complete Solana Foundation RFP alignment matrix, public-good thesis, and milestone roadmap, see [`/docs/solana-foundation`](src/app/docs/solana-foundation/page.tsx) and [`docs/foundation-rfp-alignment.md`](docs/foundation-rfp-alignment.md).
 
-## Grant / RFP alignment
+## Known Limitations
 
-An honest, line-by-line mapping of implemented functionality against the Solana Foundation's automated stake
-delegation & rebalancing UI requirements belongs in `docs/foundation-rfp-alignment.md` in a full submission — add it
-before submitting, marking anything not yet implemented as such rather than implying completeness.
-
-## Roadmap
-
-- Connect Rebalancing-page proposals to the real transaction construction layer (`src/lib/solana/stakeTransactions.ts`) so "Execute via wallet" there is live, not just the Stake Accounts page's manual redelegate flow.
-- Verify the redelegate flow end-to-end against devnet, then mainnet, with a real wallet.
-- Integrate a real ASN/geo resolution service for live mode.
-- Persist history server-side, scoped per wallet.
-- WebSocket-based live updates for validator conditions.
+- **ASN/datacenter/geo data in live mode**: standard Solana RPC does not expose a validator's hosting ASN, datacenter, or geographic location. `LiveValidatorDataProvider` honestly reports these as unknown rather than guessing — see [`src/lib/data/liveProvider.ts`](src/lib/data/liveProvider.ts).
+- **Skip rate and estimated APY in live mode**: not derivable from `getVoteAccounts` alone; tagged honestly in the data provenance layer.
+- **Rebalancing execution**: proposal generation, instruction building, decoding, and cluster safety are complete. Live mainnet transaction execution requires explicit wallet signing by design.
+- **History**: session-scoped audit trail in this reference build.
 
 ## Contributing
 

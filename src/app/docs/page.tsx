@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ProseShell } from "@/components/marketing/chrome";
 
 const DOCS = [
+  { href: "/docs/solana-foundation", title: "Solana Foundation RFP alignment", body: "Evaluation document, public-good thesis, RFP implementation matrix, and grant milestone roadmap." },
   { href: "/docs/architecture", title: "Architecture", body: "How the UI, strategy engine, data layer, and Solana transaction layer fit together." },
   { href: "/docs/strategy-engine", title: "Strategy engine", body: "Hard constraints, soft objectives, scoring, and normalization." },
   { href: "/docs/rebalancing", title: "Rebalancing", body: "Drift detection, thresholding, proposal generation, and execution safety." },

@@ -24,6 +24,24 @@ const baseConstraints: HardConstraints = {
 
 export const STRATEGY_PRESETS: StrategyPreset[] = [
   {
+    id: "foundation-decentralization",
+    label: "Foundation Decentralization",
+    description:
+      "Example policy based on published Solana Foundation delegation criteria. Enforces strict ASN (15%), datacenter (20%), and commission (5%) caps to maximize network decentralization and validator health.",
+    constraints: {
+      ...baseConstraints,
+      minVotePerformance: 0.95,
+      maxSkipRate: 0.03,
+      maxCommission: 5,
+      maxAsnConcentration: 0.15,
+      maxDatacenterConcentration: 0.2,
+      maxStakePerValidator: 0.1,
+    },
+    weights: { yield: 0.5, performance: 1.5, reliability: 1.5, decentralization: 2.5 },
+    preference: "max-decentralization",
+    targetValidatorCount: 15,
+  },
+  {
     id: "conservative",
     label: "Conservative",
     description:

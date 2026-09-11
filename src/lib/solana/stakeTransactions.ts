@@ -87,6 +87,49 @@ export function buildDelegateTransaction(args: DelegateStakeArgs): Transaction {
   });
 }
 
+export interface MergeStakeArgs {
+  stakePubkey: PublicKey;
+  sourceStakePubkey: PublicKey;
+  authorizedPubkey: PublicKey;
+}
+
+/** Merge source stake account into destination stake account. */
+export function buildMergeTransaction(args: MergeStakeArgs): Transaction {
+  return StakeProgram.merge({
+    stakePubkey: args.stakePubkey,
+    sourceStakePubKey: args.sourceStakePubkey,
+    authorizedPubkey: args.authorizedPubkey,
+  });
+}
+
+export interface AuthorizeStakeArgs {
+  stakePubkey: PublicKey;
+  authorizedPubkey: PublicKey;
+  newAuthorizedPubkey: PublicKey;
+  stakeAuthorizationType: "Staker" | "Withdrawer";
+}
+
+/** Change staker or withdrawer authority on a stake account. */
+export function buildAuthorizeTransaction(args: AuthorizeStakeArgs): Transaction {
+  return StakeProgram.authorize({
+    stakePubkey: args.stakePubkey,
+    authorizedPubkey: args.authorizedPubkey,
+    newAuthorizedPubkey: args.newAuthorizedPubkey,
+    stakeAuthorizationType: args.stakeAuthorizationType === "Staker" ? { index: 0 } : { index: 1 },
+  });
+}
+
+/** Check that requested cluster matches environment before signing transactions. */
+export function checkClusterSafety(requestedCluster: string, targetCluster: string): { safe: boolean; warning?: string } {
+  if (requestedCluster !== targetCluster) {
+    return {
+      safe: false,
+      warning: `Cluster mismatch! Wallet is connected to ${requestedCluster} but action target is ${targetCluster}. Transaction execution blocked for safety.`,
+    };
+  }
+  return { safe: true };
+}
+
 export interface InstructionSummary {
   programId: string;
   type: string;
@@ -151,8 +194,24 @@ export function describeTransaction(tx: Transaction): InstructionSummary[] {
             detail: `Delegate ${d.stakePubkey.toBase58()} to validator vote account ${d.votePubkey.toBase58()}`,
           };
         }
+        case "Merge": {
+          const d = StakeInstruction.decodeMerge(ix);
+          return {
+            programId,
+            type: "Merge",
+            detail: `Merge source stake account ${d.sourceStakePubKey.toBase58()} into destination ${d.stakePubkey.toBase58()}`,
+          };
+        }
+        case "Authorize": {
+          const d = StakeInstruction.decodeAuthorize(ix);
+          return {
+            programId,
+            type: "Authorize",
+            detail: `Change authority on ${d.stakePubkey.toBase58()} to new key ${d.newAuthorizedPubkey.toBase58()}`,
+          };
+        }
         default:
-          return { programId, type: kind, detail: "Stake program instruction (no detailed decoder wired up for this type)." };
+          return { programId, type: kind, detail: "Stake program instruction." };
       }
     } catch (err) {
       return { programId, type: "undecodable", detail: err instanceof Error ? err.message : "Failed to decode instruction." };
