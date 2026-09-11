@@ -1,0 +1,152 @@
+@import "tailwindcss";
+@import "@fontsource/space-grotesk/500.css";
+@import "@fontsource/space-grotesk/600.css";
+@import "@fontsource/space-grotesk/700.css";
+@import "@fontsource/ibm-plex-sans/400.css";
+@import "@fontsource/ibm-plex-sans/500.css";
+@import "@fontsource/ibm-plex-sans/600.css";
+@import "@fontsource/ibm-plex-mono/400.css";
+@import "@fontsource/ibm-plex-mono/500.css";
+
+/*
+ * StakeMesh design tokens.
+ *
+ * Palette: a graphite/blue-slate base (not pure #000/#0B0B0B) with a single
+ * signal accent — "mesh teal" — reserved for interactive elements and
+ * meaningful data (selected state, positive metrics, network nodes). Status
+ * colors (amber/red/green) are used only for real semantic meaning
+ * (violations, health), never decoration.
+ */
+:root[data-theme="dark"] {
+  --sm-bg: #0a0d13;
+  --sm-bg-elevated: #10141d;
+  --sm-surface: #131824;
+  --sm-surface-hover: #171d2b;
+  --sm-border: #212838;
+  --sm-border-strong: #2c3549;
+  --sm-text: #e8ecf3;
+  --sm-text-muted: #8a93a8;
+  --sm-text-faint: #5a6274;
+  --sm-accent: #4fd1c5;
+  --sm-accent-strong: #7ce0d6;
+  --sm-accent-contrast: #04120f;
+  --sm-good: #4ade80;
+  --sm-warn: #f0b429;
+  --sm-danger: #f2685c;
+  --sm-node: #5b8def;
+}
+
+:root[data-theme="light"] {
+  --sm-bg: #f7f8fa;
+  --sm-bg-elevated: #ffffff;
+  --sm-surface: #ffffff;
+  --sm-surface-hover: #f0f2f5;
+  --sm-border: #e1e4ea;
+  --sm-border-strong: #cbd0da;
+  --sm-text: #12151c;
+  --sm-text-muted: #5b6272;
+  --sm-text-faint: #8991a1;
+  --sm-accent: #0f9c8f;
+  --sm-accent-strong: #0b7d73;
+  --sm-accent-contrast: #ffffff;
+  --sm-good: #17a15a;
+  --sm-warn: #a8720b;
+  --sm-danger: #c4362a;
+  --sm-node: #2f5fd6;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+@theme inline {
+  --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+
+  --color-sm-bg: var(--sm-bg);
+  --color-sm-bg-elevated: var(--sm-bg-elevated);
+  --color-sm-surface: var(--sm-surface);
+  --color-sm-surface-hover: var(--sm-surface-hover);
+  --color-sm-border: var(--sm-border);
+  --color-sm-border-strong: var(--sm-border-strong);
+  --color-sm-text: var(--sm-text);
+  --color-sm-text-muted: var(--sm-text-muted);
+  --color-sm-text-faint: var(--sm-text-faint);
+  --color-sm-accent: var(--sm-accent);
+  --color-sm-accent-strong: var(--sm-accent-strong);
+  --color-sm-accent-contrast: var(--sm-accent-contrast);
+  --color-sm-good: var(--sm-good);
+  --color-sm-warn: var(--sm-warn);
+  --color-sm-danger: var(--sm-danger);
+  --color-sm-node: var(--sm-node);
+}
+
+* {
+  border-color: var(--sm-border);
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--sm-bg);
+  color: var(--sm-text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--sm-accent);
+  color: var(--sm-accent-contrast);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Visible, consistent focus ring across every interactive element. */
+:focus-visible {
+  outline: 2px solid var(--sm-accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Restyle wallet-adapter's default button to match the StakeMesh token system. */
+.stakemesh-wallet-button .wallet-adapter-button {
+  background: var(--sm-accent);
+  color: var(--sm-accent-contrast);
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  height: auto;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  line-height: 1.25rem;
+}
+.stakemesh-wallet-button .wallet-adapter-button:not([disabled]):hover {
+  background: var(--sm-accent-strong);
+}
+.stakemesh-wallet-button .wallet-adapter-button-start-icon {
+  margin-right: 0.5rem;
+}
+
