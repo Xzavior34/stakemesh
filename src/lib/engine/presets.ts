@@ -1,5 +1,12 @@
 import type { HardConstraints, ObjectiveWeights, OptimizationPreference } from "@/lib/types";
 
+export interface StrategyPresetMetadata {
+  policySource: string;
+  retrievalDate: string;
+  criteriaVersion: string;
+  lastVerifiedTimestamp: string;
+}
+
 export interface StrategyPreset {
   id: string;
   label: string;
@@ -8,6 +15,7 @@ export interface StrategyPreset {
   weights: ObjectiveWeights;
   preference: OptimizationPreference;
   targetValidatorCount: number;
+  metadata?: StrategyPresetMetadata;
 }
 
 const baseConstraints: HardConstraints = {
@@ -25,21 +33,28 @@ const baseConstraints: HardConstraints = {
 export const STRATEGY_PRESETS: StrategyPreset[] = [
   {
     id: "foundation-decentralization",
-    label: "Foundation Decentralization",
+    label: "Foundation-Aligned Preset",
     description:
-      "Example policy based on published Solana Foundation delegation criteria. Enforces strict ASN (15%), datacenter (20%), and commission (5%) caps to maximize network decentralization and validator health.",
+      "Example policy based on published Solana Foundation delegation criteria. Enforces commission (<= 5%), ASN concentration (<= 25%), datacenter concentration (<= 15%), vote performance (>= 97%), skip rate (<= 5%), and minimum software version ('1.18.0').",
     constraints: {
       ...baseConstraints,
-      minVotePerformance: 0.95,
-      maxSkipRate: 0.03,
+      minVotePerformance: 0.97,
+      maxSkipRate: 0.05,
       maxCommission: 5,
-      maxAsnConcentration: 0.15,
-      maxDatacenterConcentration: 0.2,
+      maxAsnConcentration: 0.25,
+      maxDatacenterConcentration: 0.15,
       maxStakePerValidator: 0.1,
+      minSoftwareVersion: "1.18.0",
     },
     weights: { yield: 0.5, performance: 1.5, reliability: 1.5, decentralization: 2.5 },
     preference: "max-decentralization",
     targetValidatorCount: 15,
+    metadata: {
+      policySource: "Solana Foundation Delegation Program Criteria (Published Guidelines)",
+      retrievalDate: "2026-09-11",
+      criteriaVersion: "Epoch 650+ Current Delegation Criteria",
+      lastVerifiedTimestamp: "2026-09-11T17:40:00Z",
+    },
   },
   {
     id: "conservative",

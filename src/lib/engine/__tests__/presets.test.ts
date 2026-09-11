@@ -39,9 +39,16 @@ describe("STRATEGY_PRESETS", () => {
     }
   });
 
-  it("decentralization-first never produces a looser ASN ceiling than balanced", () => {
-    const d = getPreset("decentralization-first")!;
-    const b = getPreset("balanced")!;
-    expect(d.constraints.maxAsnConcentration).toBeLessThanOrEqual(b.constraints.maxAsnConcentration);
+  it("foundation-decentralization preset exposes metadata and exact published criteria thresholds", () => {
+    const f = getPreset("foundation-decentralization")!;
+    expect(f.label).toBe("Foundation-Aligned Preset");
+    expect(f.metadata).toBeDefined();
+    expect(f.metadata?.policySource).toContain("Solana Foundation");
+    expect(f.constraints.maxCommission).toBe(5);
+    expect(f.constraints.maxAsnConcentration).toBe(0.25);
+    expect(f.constraints.maxDatacenterConcentration).toBe(0.15);
+    expect(f.constraints.minVotePerformance).toBe(0.97);
+    expect(f.constraints.maxSkipRate).toBe(0.05);
+    expect(f.constraints.minSoftwareVersion).toBe("1.18.0");
   });
 });

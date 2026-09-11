@@ -1,6 +1,5 @@
 import React from "react";
-import Link from "next/link";
-import { ShieldCheck, CheckCircle2, AlertTriangle, Layers, Cpu, Code2, ExternalLink } from "lucide-react";
+import { ShieldCheck, CheckCircle2, Layers, Cpu, Code2, ExternalLink } from "lucide-react";
 
 export const metadata = {
   title: "Solana Foundation Grant & RFP Review | StakeMesh Docs",

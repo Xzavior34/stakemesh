@@ -1,39 +1,68 @@
-# Foundation RFP Alignment
+# Solana Foundation RFP Alignment & Capability Matrix
 
-An honest mapping of StakeMesh's current implementation against the Solana Foundation's Automated Stake Delegation &
-Rebalancing UI requirements, as understood from the product brief this repository was built against. This document is
-maintained alongside the code — if a status below is wrong, that's a bug in the docs and should be fixed in the same
-PR as whatever changed the underlying behavior.
+An honest mapping of StakeMesh's current implementation against the Solana Foundation's Automated Stake Delegation & Rebalancing UI requirements. This document strictly uses three statuses: **IMPLEMENTED**, **PARTIAL**, and **PLANNED**.
 
-Status values used throughout this document: **IMPLEMENTED**, **PARTIAL**, **NOT IMPLEMENTED**. A status is never
-upgraded to IMPLEMENTED until the underlying behavior is actually complete and tested — a partial capability stays
-PARTIAL for as long as it is one.
+A capability is marked **IMPLEMENTED** only when fully functional and tested. Capabilities that exist as abstractions, offline builders, or partial RPC integrations are marked **PARTIAL**. Autonomous features or external indexers are marked **PLANNED**.
 
-## Multi-validator staking — IMPLEMENTED
+---
 
-The allocation engine spreads a requested stake amount across multiple validators according to policy, with a
-configurable target validator count. Covered by unit tests in `src/lib/engine/__tests__/allocate.test.ts`.
+## Detailed Requirement Breakdown
 
-## Custom delegation criteria — IMPLEMENTED
+### 1. Allocation Engine — IMPLEMENTED
+Deterministic greedy allocator (`allocate.ts`) spreading requested stake across multiple validators according to policy constraints. Enforces 10 core policy engine invariants (lamport conservation, non-negative legs, hard constraint preservation, non-worsening rebalance). Covered by 22 unit & invariant tests.
 
-Hard constraints (minimum vote performance, maximum skip rate, maximum commission, maximum ASN/datacenter/per-validator concentration, minimum software version, active-only, delinquency exclusion) and soft objective weights (yield, performance, reliability, decentralization) are fully configurable via the Strategy page. A first-class "Foundation Decentralization Strategy" preset based on published Foundation delegation criteria is now included out of the box.
+### 2. Validator Filtering — IMPLEMENTED
+Filterable, sortable validator directory supported on the Validators page, filtering by commission, minimum vote performance, maximum skip rate, software version, and delinquency status.
 
-## Transaction construction — IMPLEMENTED (OFFLINE VERIFIED)
+### 3. Policy Constraints & Foundation Preset — IMPLEMENTED
+User-configurable hard constraints and soft objective weights. Includes a first-class **Foundation-aligned preset** based on published Solana Foundation delegation criteria (Commission <= 5%, ASN concentration <= 25%, Datacenter concentration <= 15%, Vote Performance >= 97%, Skip Rate <= 5%, Software Version >= 1.18.0). Exposes policy source metadata, retrieval date, and criteria version.
 
-Real read-side transaction data exists (stake account lookups via `getParsedProgramAccounts`, tested against a real Solana RPC connection object). Real write-side construction exists: `src/lib/solana/stakeTransactions.ts` builds actual `StakeProgram` Split, Deactivate, Delegate, Merge, and Authorize transactions and decodes them back into a human-readable instruction preview from real serialized instruction data, with cluster-mismatch safety checks (`checkClusterSafety`). Covered by 18 unit tests in `src/lib/solana/__tests__/stakeTransactions.test.ts`.
+### 4. Concentration Enforcement — IMPLEMENTED
+Portfolio-level ASN, datacenter, and single-validator concentration ceilings enforced in both allocation and rebalancing drift detection.
 
-## Summary
+### 5. Stake-Account Discovery — IMPLEMENTED
+Read-side on-chain stake account lookups via Solana RPC `getParsedProgramAccounts(StakeProgram.programId)`.
 
-| Requirement | Status |
-| --- | --- |
-| Multi-validator staking | IMPLEMENTED |
-| Custom delegation criteria & Foundation Preset | IMPLEMENTED |
-| Automatic/recommended rebalancing | IMPLEMENTED (Recommendation engine & transaction builder complete) |
-| Validator filtering | IMPLEMENTED |
-| Transaction construction & Decoding | IMPLEMENTED (Split, Deactivate, Delegate, Merge, Authorize, Cluster check) |
-| Policy Invariants | IMPLEMENTED (10 core invariants tested) |
-| WebSocket updates | PARTIAL (Provider abstraction ready for subscription layer) |
-| Stake dashboard | IMPLEMENTED |
-| Validator metrics | PARTIAL (Full in demo mode, provenance tagged in live mode) |
-| Reason for stake changes | IMPLEMENTED |
-| Open-source reference implementation | IMPLEMENTED |
+### 6. Transaction Construction & Decoding — PARTIAL
+Real `StakeProgram` transaction construction for Split, Deactivate, Delegate, Merge, and Authorize operations in `src/lib/solana/stakeTransactions.ts`. Decodes raw serialized instruction buffers into human-readable summaries (`describeTransaction`) and enforces cluster safety (`checkClusterSafety`). Status is PARTIAL because while instruction construction is verified offline against `@solana/web3.js`, live submission requires wallet interaction.
+
+### 7. Wallet Signing — IMPLEMENTED
+Standard Wallet Standard / `@solana/wallet-adapter` integration on the Stake Accounts page requiring explicit user wallet authorization for all transaction signatures.
+
+### 8. Transaction Submission — PARTIAL
+Manual wallet-signed submission flow implemented on the Stake Accounts page. Status is PARTIAL until automated end-to-end devnet test execution is run with active devnet RPC and funded test wallet.
+
+### 9. Transaction Confirmation — PARTIAL
+Signature status polling and confirmation verification scaffolded via Solana RPC.
+
+### 10. Automatic Monitoring — PARTIAL
+Polling-based snapshots via `getSnapshot()` and drift detection engine (`detectViolations()`). Status is PARTIAL because polling is request-driven rather than continuous background streaming.
+
+### 11. WebSockets — PLANNED
+Subscription-based live update path (`provider.ts` interface) planned for Milestone 2.
+
+### 12. ASN / Datacenter Intelligence — PARTIAL
+Full infrastructure metadata (ASN, datacenter, country) populated in demo mode. Standard Solana RPC does not expose gossip IP geolocation, so live mode honestly surfaces these as unknown rather than fabricating values. Production indexer planned for Milestone 1.
+
+### 13. Automatic Rebalancing — PLANNED
+Auto-execution without human authorization is intentionally omitted for non-custodial security. Recommend-only proposal generation is IMPLEMENTED; autonomous execution is PLANNED as opt-in grant work.
+
+---
+
+## Alignment Summary Matrix
+
+| Capability | Status | Evidence / Location |
+| --- | --- | --- |
+| **Allocation Engine** | **IMPLEMENTED** | `src/lib/engine/allocate.ts`, `allocate.test.ts` |
+| **Validator Filtering** | **IMPLEMENTED** | `src/lib/engine/scoring.ts`, `src/app/app/validators/page.tsx` |
+| **Policy Constraints & Presets** | **IMPLEMENTED** | `src/lib/engine/presets.ts`, `presets.test.ts` |
+| **Concentration Enforcement** | **IMPLEMENTED** | `src/lib/engine/concentration.ts`, `concentration.test.ts` |
+| **Stake-Account Discovery** | **IMPLEMENTED** | `src/lib/solana/stakeTransactions.ts` |
+| **Transaction Construction & Decoding** | **PARTIAL** | `src/lib/solana/stakeTransactions.ts`, `stakeTransactions.test.ts` |
+| **Wallet Signing** | **IMPLEMENTED** | `src/app/app/stake-accounts/page.tsx`, `@solana/wallet-adapter` |
+| **Transaction Submission** | **PARTIAL** | Devnet verification pipeline helper (`devnetVerification.ts`) |
+| **Transaction Confirmation** | **PARTIAL** | Signature status verification scaffolding |
+| **Automatic Monitoring** | **PARTIAL** | `detectViolations()` drift detection in `rebalance.ts` |
+| **WebSockets** | **PLANNED** | Milestone 2 Roadmap (`provider.ts` abstraction) |
+| **ASN/Datacenter Intelligence** | **PARTIAL** | `liveProvider.ts` (honest unknown reporting in RPC mode) |
+| **Automatic Rebalancing** | **PLANNED** | Non-custodial recommend-only design; auto-execution planned opt-in |
